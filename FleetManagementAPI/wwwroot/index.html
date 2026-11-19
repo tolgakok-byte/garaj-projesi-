@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garaj & Filo Yönetim Sistemi</title>
+    <style>
+        :root {
+            --primary: #1e293b;
+            --accent: #2563eb;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --danger: #dc2626;
+            --warn: #d97706;
+            --ok: #16a34a;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: #0f172a;
+        }
+
+        header {
+            background: var(--primary);
+            color: #fff;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+            .stat-card h3 {
+                margin: 0;
+                font-size: 13px;
+                color: #64748b;
+            }
+
+            .stat-card p {
+                margin: 8px 0 0;
+                font-size: 24px;
+                font-weight: bold;
+                color: var(--primary);
+            }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 18px;
+            border: none;
+            background: #cbd5e1;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: 0.2s;
+            width: auto;
+        }
+
+            .tab-btn.active {
+                background: var(--accent);
+                color: #fff;
+            }
+
+        .tab-panel {
+            display: none;
+            background: var(--card);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+            .tab-panel.active {
+                display: block;
+            }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: end;
+        }
+
+        input, select, button {
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 100%;
+        }
+
+            button.btn-primary {
+                background: var(--accent);
+                color: #fff;
+                border: none;
+                cursor: pointer;
+                font-weight: 600;
+            }
+
+            button.btn-success {
+                background: var(--ok);
+                color: #fff;
+                border: none;
+                cursor: pointer;
+                width: auto;
+            }
+
+            button.btn-danger {
+                background: var(--danger);
+                color: #fff;
+                border: none;
+                cursor: pointer;
+                width: auto;
+            }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #fff;
+            display: inline-block;
+        }
+
+        .bg-ok {
+            background: var(--ok);
+        }
+
+        .bg-warn {
+            background: var(--warn);
+        }
+
+        .bg-danger {
+            background: var(--danger);
+        }
+
+        #loginOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .login-box {
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 350px;
+            text-align: center;
+        }
+
+            .login-box input {
+                margin-bottom: 12px;
+                background-color: #fff;
+            }
+
+        .admin-only {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loginOverlay">
+        <div class="login-box">
+            <h2>🔐 Garaj Yönetim Girişi</h2>
+            <form autocomplete="off" onsubmit="event.preventDefault(); girisYap();">
+                <input type="text" id="loginUser" name="garaj_kullanici_yeni" placeholder="Kullanıcı Adı" autocomplete="off" readonly onfocus="this.removeAttribute('readonly');">
+                <input type="password" id="loginPass" name="garaj_sifre_yeni" placeholder="Şifre" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly');">
+                <button type="submit" class="btn-primary">Giriş Yap</button>
+            </form>
+            <p id="loginHata" style="color:red; font-size:13px; margin-top:10px;"></p>
+        </div>
+    </div>
+
+    <header>
+        <div>
+            <strong>🚛 Garaj & Filo Yönetim Paneli</strong>
+            <span id="rolRozeti" style="font-size:12px; background:#16a34a; padding:3px 8px; border-radius:4px; margin-left:6px;">Sistem Aktif</span>
+        </div>
+        <div class="header-actions">
+            <button class="btn-success admin-only" onclick="window.location.href='/api/Gorevler/excel'">📥 Excel Rapor İndir</button>
+            <button class="btn-danger" onclick="cikisYap()">Çıkış</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="stats">
+            <div class="stat-card"><h3>TOPLAM ARAÇ</h3><p id="statToplamArac">0</p></div>
+            <div class="stat-card"><h3>GARAJDA (AKTİF)</h3><p id="statAktifArac">0</p></div>
+            <div class="stat-card"><h3>GÖREVDEKİ ARAÇ</h3><p id="statGorevdeArac">0</p></div>
+            <div class="stat-card"><h3>KAYITLI SÜRÜCÜ</h3><p id="statSurucu">0</p></div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-target="panelGorevler">📋 Görevlendirmeler</button>
+            <button class="tab-btn" data-target="panelAraclar">🚚 Araç Listesi</button>
+            <button class="tab-btn admin-only" data-target="panelSuruculer">👷 Sürücüler</button>
+        </div>
+
+        <!-- 1. GÖREVLENDİRMELER -->
+        <div id="panelGorevler" class="tab-panel active">
+            <h4>Yeni Araç Görevlendirme (Çıkış Kaydı)</h4>
+            <div class="form-grid">
+                <select id="gorevAracSec"></select>
+                <select id="gorevSurucuSec"></select>
+                <input type="text" id="gorevAciklama" placeholder="Görev / Güzergah Açıklaması">
+                <button class="btn-primary" onclick="gorevEkle()">+ Görev Başlat</button>
+            </div>
+
+            <h4>Filtreleme (Plaka & Tarih)</h4>
+            <div class="form-grid">
+                <input type="text" id="filtrePlaka" placeholder="Plaka Ara (Örn: 35 ABC)">
+                <input type="date" id="filtreBaslangic">
+                <input type="date" id="filtreBitis">
+                <button class="btn-primary" onclick="gorevleriYukle()">🔍 Filtrele</button>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Araç</th>
+                            <th>Sürücü</th>
+                            <th>Açıklama</th>
+                            <th>Çıkış</th>
+                            <th>Çıkış KM</th>
+                            <th>Dönüş KM</th>
+                            <th>İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listeGorevler"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 2. ARAÇ LİSTESİ -->
+        <div id="panelAraclar" class="tab-panel">
+            <div class="admin-only">
+                <h4>Yeni Araç Ekle</h4>
+                <div class="form-grid">
+                    <input type="text" id="aracPlaka" placeholder="Plaka (35 ABC 123)">
+                    <input type="text" id="aracMarka" placeholder="Marka (Ford, Fiat...)">
+                    <input type="text" id="aracModel" placeholder="Model (Transit, Doblo...)">
+                    <input type="number" id="aracYil" placeholder="Model Yılı">
+                    <input type="number" id="aracKm" placeholder="Güncel KM">
+                    <div><small>Muayene Tarihi:</small><input type="date" id="aracMuayene"></div>
+                    <div><small>Sigorta Tarihi:</small><input type="date" id="aracSigorta"></div>
+                    <button class="btn-primary" onclick="aracEkle()">+ Araç Ekle</button>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Plaka</th>
+                            <th>Marka / Model</th>
+                            <th>Yıl</th>
+                            <th>KM</th>
+                            <th>Muayene</th>
+                            <th>Sigorta</th>
+                            <th>Durum</th>
+                            <th class="admin-only">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listeAraclar"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. SÜRÜCÜLER -->
+        <div id="panelSuruculer" class="tab-panel">
+            <h4>Yeni Sürücü Ekle</h4>
+            <div class="form-grid">
+                <input type="text" id="surucuAd" placeholder="Adı">
+                <input type="text" id="surucuSoyad" placeholder="Soyadı">
+                <input type="text" id="surucuTel" placeholder="Telefon">
+                <input type="text" id="surucuEhliyet" placeholder="Ehliyet Sınıfı (B, C, E)">
+                <button class="btn-primary" onclick="surucuEkle()">+ Sürücü Ekle</button>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Ad Soyad</th><th>Telefon</th><th>Ehliyet Sınıfı</th><th>İşlem</th></tr>
+                    </thead>
+                    <tbody id="listeSuruculer"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let aktifRol = "sofor";
+
+        function yetkileriUygula(rol) {
+            aktifRol = rol;
+            const rozet = document.getElementById("rolRozeti");
+            rozet.innerText = rol === "admin" ? "👑 Admin Yetkili" : "🚚 Şoför Girişi";
+            rozet.style.background = rol === "admin" ? "#2563eb" : "#16a34a";
+
+            document.querySelectorAll(".admin-only").forEach(el => {
+                el.style.display = (rol === "admin") ? "" : "none";
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            document.getElementById("loginUser").value = "";
+            document.getElementById("loginPass").value = "";
+
+            const res = await fetch("/api/auth-check");
+            if (res.ok) {
+                const veri = await res.json();
+                yetkileriUygula(veri.rol);
+                document.getElementById("loginOverlay").style.display = "none";
+                tumVerileriYukle();
+            }
+
+            document.querySelectorAll(".tab-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+                    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+
+                    btn.classList.add("active");
+                    const hedef = btn.getAttribute("data-target");
+                    document.getElementById(hedef).classList.add("active");
+                    tumVerileriYukle();
+                });
+            });
+        });
+
+        async function girisYap() {
+            const user = document.getElementById("loginUser").value.trim();
+            const pass = document.getElementById("loginPass").value.trim();
+            const res = await fetch("/api/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user, pass })
+            });
+            if (res.ok) {
+                const veri = await res.json();
+                yetkileriUygula(veri.rol);
+                document.getElementById("loginOverlay").style.display = "none";
+                document.getElementById("loginHata").innerText = "";
+                document.getElementById("loginUser").value = "";
+                document.getElementById("loginPass").value = "";
+                tumVerileriYukle();
+            } else {
+                document.getElementById("loginHata").innerText = "Hatalı kullanıcı adı veya şifre!";
+            }
+        }
+
+        async function cikisYap() {
+            await fetch("/api/logout", { method: "POST" });
+            location.reload();
+        }
+
+        async function tumVerileriYukle() {
+            await araclarYukle();
+            await suruculerYukle();
+            await gorevleriYukle();
+        }
+
+        function tarihUyariRozeti(tarihStr) {
+            if (!tarihStr) return '<span class="badge bg-warn">Girilmedi</span>';
+            const farkGun = Math.ceil((new Date(tarihStr) - new Date()) / (1000 * 60 * 60 * 24));
+            const formatli = new Date(tarihStr).toLocaleDateString("tr-TR");
+            if (farkGun < 0) return `<span class="badge bg-danger">${formatli} (GEÇTİ!)</span>`;
+            if (farkGun <= 15) return `<span class="badge bg-danger">${formatli} (${farkGun} gün)</span>`;
+            if (farkGun <= 30) return `<span class="badge bg-warn">${formatli} (${farkGun} gün)</span>`;
+            return `<span class="badge bg-ok">${formatli}</span>`;
+        }
+
+        async function araclarYukle() {
+            const res = await fetch("/api/Araclar");
+            if (!res.ok) return;
+            const araclar = await res.json();
+
+            document.getElementById("statToplamArac").innerText = araclar.length;
+            document.getElementById("statAktifArac").innerText = araclar.filter(a => a.durum === "Aktif").length;
+            document.getElementById("statGorevdeArac").innerText = araclar.filter(a => a.durum === "Görevde").length;
+
+            const sec = document.getElementById("gorevAracSec");
+            sec.innerHTML = '<option value="">-- Araç Seçin --</option>' +
+                araclar.filter(a => a.durum === "Aktif").map(a => `<option value="${a.aracID}">${a.plaka} - ${a.marka} ${a.model} (${a.kilometre ?? 0} km)</option>`).join("");
+
+            document.getElementById("listeAraclar").innerHTML = araclar.map(a => `
+            <tr>
+                <td><strong>${a.plaka}</strong></td>
+                <td>${a.marka} ${a.model}</td>
+                <td>${a.yil ?? '-'}</td>
+                <td>${(a.kilometre ?? 0).toLocaleString("tr-TR")} km</td>
+                <td>${tarihUyariRozeti(a.muayeneTarihi)}</td>
+                <td>${tarihUyariRozeti(a.sigortaTarihi)}</td>
+                <td><span class="badge ${a.durum === 'Aktif' ? 'bg-ok' : 'bg-warn'}">${a.durum ?? 'Aktif'}</span></td>
+                ${aktifRol === 'admin' ? `<td><button class="btn-danger" onclick="sil('/api/Araclar/${a.aracID}')">Sil</button></td>` : ''}
+            </tr>
+        `).join("");
+        }
+
+        async function suruculerYukle() {
+            const res = await fetch("/api/Suruculer");
+            if (!res.ok) return;
+            const suruculer = await res.json();
+
+            document.getElementById("statSurucu").innerText = suruculer.length;
+            document.getElementById("gorevSurucuSec").innerHTML = '<option value="">-- Sürücü Seçin --</option>' +
+                suruculer.map(s => `<option value="${s.surucuID}">${s.ad} ${s.soyad} (${s.ehliyetSinifi ?? '-'})</option>`).join("");
+
+            document.getElementById("listeSuruculer").innerHTML = suruculer.map(s => `
+            <tr>
+                <td>${s.ad} ${s.soyad}</td>
+                <td>${s.telefon ?? '-'}</td>
+                <td>${s.ehliyetSinifi ?? '-'}</td>
+                <td><button class="btn-danger" onclick="sil('/api/Suruculer/${s.surucuID}')">Sil</button></td>
+            </tr>
+        `).join("");
+        }
+
+        async function gorevleriYukle() {
+            const plaka = document.getElementById("filtrePlaka").value;
+            const bas = document.getElementById("filtreBaslangic").value;
+            const bit = document.getElementById("filtreBitis").value;
+
+            const params = new URLSearchParams();
+            if (plaka) params.append("plaka", plaka);
+            if (bas) params.append("baslangic", bas);
+            if (bit) params.append("bitis", bit);
+
+            const res = await fetch(`/api/Gorevler?${params.toString()}`);
+            if (!res.ok) return;
+            const gorevler = await res.json();
+
+            document.getElementById("listeGorevler").innerHTML = gorevler.map(g => `
+            <tr>
+                <td>#${g.gorevID}</td>
+                <td><strong>${g.plaka}</strong></td>
+                <td>${g.surucuAd}</td>
+                <td>${g.aciklama}</td>
+                <td>${new Date(g.baslangicTarihi).toLocaleString("tr-TR")}</td>
+                <td>${g.cikisKm ?? 0} km</td>
+                <td>${g.donusKm ? g.donusKm + ' km' : '<span class="badge bg-warn">Görevde</span>'}</td>
+                <td>
+                    ${!g.bitisTarihi ? `<button class="btn-success" onclick="gorevBitir(${g.gorevID}, ${g.cikisKm ?? 0})">Dönüş Yap</button>` : '✅ Tamamlandı'}
+                    ${aktifRol === 'admin' ? `<button class="btn-danger" onclick="sil('/api/Gorevler/${g.gorevID}')">Sil</button>` : ''}
+                </td>
+            </tr>
+        `).join("");
+        }
+
+        async function aracEkle() {
+            const body = {
+                plaka: document.getElementById("aracPlaka").value.toUpperCase(),
+                marka: document.getElementById("aracMarka").value,
+                model: document.getElementById("aracModel").value,
+                yil: parseInt(document.getElementById("aracYil").value) || 2020,
+                kilometre: parseInt(document.getElementById("aracKm").value) || 0,
+                muayeneTarihi: document.getElementById("aracMuayene").value || null,
+                sigortaTarihi: document.getElementById("aracSigorta").value || null,
+                durum: "Aktif"
+            };
+            await fetch("/api/Araclar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+            tumVerileriYukle();
+        }
+
+        async function surucuEkle() {
+            const body = {
+                ad: document.getElementById("surucuAd").value,
+                soyad: document.getElementById("surucuSoyad").value,
+                telefon: document.getElementById("surucuTel").value,
+                ehliyetSinifi: document.getElementById("surucuEhliyet").value.toUpperCase(),
+                kayitTarihi: new Date().toISOString()
+            };
+            await fetch("/api/Suruculer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+            tumVerileriYukle();
+        }
+
+        async function gorevEkle() {
+            const body = {
+                aracID: parseInt(document.getElementById("gorevAracSec").value),
+                surucuID: parseInt(document.getElementById("gorevSurucuSec").value),
+                aciklama: document.getElementById("gorevAciklama").value
+            };
+            if (!body.aracID || !body.surucuID) return alert("Lütfen araç ve sürücü seçin!");
+            await fetch("/api/Gorevler", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+            tumVerileriYukle();
+        }
+
+        async function gorevBitir(id, cikisKm) {
+            const girilen = prompt(`Araç dönüş kilometresini girin (Çıkış KM: ${cikisKm}):`, cikisKm);
+            if (!girilen) return;
+            const res = await fetch(`/api/Gorevler/tamamla/${id}?donusKm=${parseInt(girilen)}`, { method: "PUT" });
+            if (!res.ok) alert(await res.text());
+            tumVerileriYukle();
+        }
+
+        async function sil(url) {
+            if (!confirm("Silmek istediğinize emin misiniz?")) return;
+            await fetch(url, { method: "DELETE" });
+            tumVerileriYukle();
+        }
+    </script>
+</body>
+</html>
