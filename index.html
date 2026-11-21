@@ -368,8 +368,10 @@
             rozet.style.background = rol === "admin" ? "#2563eb" : "#16a34a";
 
             document.querySelectorAll(".admin-only").forEach(el => {
-                el.style.display = (rol === "admin") ? "" : "none";
-            });
+    		el.style.display = (rol === "admin") ? "inline-block" : "none";
+	});
+
+		
         }
 
         document.addEventListener("DOMContentLoaded", async () => {
@@ -440,7 +442,9 @@
         }
 
         async function araclarYukle() {
-            const res = await fetch("/api/Araclar");
+            const res = await fetch("/api/Araclar?t=" + Date.now());
+
+	    
             if (!res.ok) return;
             const araclar = await res.json();
 
@@ -467,7 +471,8 @@
         }
 
         async function suruculerYukle() {
-            const res = await fetch("/api/Suruculer");
+            const res = await fetch("/api/Suruculer?t=" + Date.now());
+
             if (!res.ok) return;
             const suruculer = await res.json();
 
